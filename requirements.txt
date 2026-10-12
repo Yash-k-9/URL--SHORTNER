@@ -1,0 +1,40 @@
+# FastAPI
+fastapi
+uvicorn[standard]
+
+# Database
+sqlalchemy
+psycopg[binary]
+alembic
+
+# Validation
+pydantic
+email-validator
+
+# Authentication
+python-jose[cryptography]
+passlib[argon2]
+python-multipart
+
+# Environment Variables
+python-dotenv
+
+# Redis & Caching
+redis
+
+# QR Code Generation
+qrcode[pil]
+Pillow
+
+# URL Validation (optional, Pydantic already handles HttpUrl)
+validators
+
+# HTTP Requests (for testing/external APIs)
+httpx
+
+# Testing
+pytest
+pytest-asyncio
+
+# Logging (optional)
+loguru
