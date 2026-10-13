@@ -1,13 +1,11 @@
-from pydantic import BaseModel,EmailStr,field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 import re
 from datetime import datetime
 
-class User(BaseModel):
-    id: int
+class UserBase(BaseModel):
     name: str
     email: EmailStr
     number: str
-    Pass: str
 
     @field_validator("number")
     @classmethod
@@ -18,8 +16,11 @@ class User(BaseModel):
             )
         return value
 
-    
-    @field_validator("Pass")
+class UserCreate(UserBase):
+    """Sign-up payload. The password is only ever accepted, never returned."""
+    password: str
+
+    @field_validator("password")
     @classmethod
     def password_validator(cls, password):
         if len(password) < 8:
@@ -39,22 +40,31 @@ class User(BaseModel):
 
         return password
 
+class UserOut(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+
 class Url(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id:int
     orig_url:str
     short_url:str
     created_at:datetime
-    expires_at:datetime
-    user_id:int
-    
+    expires_at:datetime | None = None
+    user_id:int | None = None
+
 class Click(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id:int
-    country :str
-    city :str
-    browser :str
-    device :str
-    operating_system :str
-    ip_address :str
-    referrer :str
+    country :str | None = None
+    city :str | None = None
+    browser :str | None = None
+    device :str | None = None
+    operating_system :str | None = None
+    ip_address :str | None = None
+    referrer :str | None = None
     clicked_at :datetime
     url_id:int

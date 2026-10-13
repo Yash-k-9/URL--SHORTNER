@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer,Float,ForeignKey
 from sqlalchemy.orm import declarative_base,relationship
 from sqlalchemy import DateTime
-from datetime import datetime
+from core.utils import utcnow
 
 base=declarative_base()
 
@@ -22,9 +22,9 @@ class User(base):
 class Url(base):
     __tablename__='links'
     id=Column(Integer,primary_key=True,index=True)
-    orig_url=Column(String,unique=True)
+    orig_url=Column(String,index=True)
     short_url=Column(String,unique=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
     expires_at = Column(DateTime, nullable=True)
     user_id=Column(Integer,ForeignKey("users.id"))
 
@@ -45,7 +45,7 @@ class Click(base):
     operating_system = Column(String, nullable=True)
     ip_address = Column(String, nullable=True)
     referrer = Column(String, nullable=True)
-    clicked_at = Column(DateTime, default=datetime.utcnow)
+    clicked_at = Column(DateTime, default=utcnow)
 
     url_id=Column(Integer,ForeignKey("links.id"))
     url=relationship('Url',back_populates='clicks')

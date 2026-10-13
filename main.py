@@ -1,8 +1,13 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine
 from databse_models import base
 from api.routes import router
+from core.config import ALLOWED_ORIGINS
+
+logging.basicConfig(level=logging.INFO)
 
 # Initialize database tables
 base.metadata.create_all(bind=engine)
@@ -11,10 +16,12 @@ app = FastAPI(title="URL Shortener API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all origins in development
-    allow_credentials=True,
+    allow_origins=ALLOWED_ORIGINS,
+    # Browsers reject credentials with a wildcard origin, so only enable them
+    # when explicit origins are configured
+    allow_credentials="*" not in ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(router)
+app.include_router(router)
