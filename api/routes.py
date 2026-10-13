@@ -11,7 +11,8 @@ from datetime import datetime
 import redis
 
 from database import get_db, SessionLocal
-from databse_models import Url, Click
+from databse_models import Url, Click, User
+from api.auth import get_current_user, get_optional_user
 from core.config import CACHE_TTL_SECONDS
 from core.utils import generate_short_code, utcnow
 from core.rediss import redis_client
@@ -90,12 +91,18 @@ def _find_reusable(db: Session, orig_url: str) -> Url | None:
 
 @router.post("/shorten", response_model=ShortenResponse)
 @rate_limit(max_requests=3, time_window=60)
-def shorten_url(request: Request, payload: ShortenRequest, db: Session = Depends(get_db)):
+def shorten_url(
+    request: Request,
+    payload: ShortenRequest,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+):
     orig_url_str = str(payload.url)
     domain = str(request.base_url)
 
     for _ in range(MAX_CODE_ATTEMPTS):
-        existing_url = _find_reusable(db, orig_url_str)
+        # Logged-in users always get their own link so it shows up in their /urls
+        existing_url = _find_reusable(db, orig_url_str) if user is None else None
         if existing_url:
             return ShortenResponse(
                 short_url=f"{domain}{existing_url.short_url}",
@@ -107,6 +114,7 @@ def shorten_url(request: Request, payload: ShortenRequest, db: Session = Depends
         new_url = Url(
             orig_url=orig_url_str,
             short_url=generate_short_code(),
+            user_id=user.id if user else None,
         )
         db.add(new_url)
         try:
@@ -132,8 +140,10 @@ def get_all_urls(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    urls = db.query(Url).order_by(Url.id.desc()).offset(skip).limit(limit).all()
+    # Only the logged-in user's own links
+    urls = db.query(Url).filter(Url.user_id == user.id).order_by(Url.id.desc()).offset(skip).limit(limit).all()
     domain = str(request.base_url)
 
     return [

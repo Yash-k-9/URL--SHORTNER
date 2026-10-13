@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine
 from databse_models import base
+from api.auth import router as auth_router
 from api.routes import router
 from core.config import ALLOWED_ORIGINS
 
@@ -24,4 +25,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# auth first: routes.py ends with a catch-all /{short_code}
+app.include_router(auth_router)
 app.include_router(router)
